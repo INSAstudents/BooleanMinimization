@@ -12,6 +12,8 @@
 
 #include "types.h"
 
+#include "exportLP.h"
+
 
 struct {
 	int sbox_index;
@@ -174,6 +176,18 @@ int main(int argc, const char* argv[])
 		print_chart<with16bits>(fout_chart, mintermschart);
 		print_chart<with16bits>(fout_chart, primeimplicantschart);
 	}
+	}
+
+
+	{
+        const char* modes[3] = {"bin", "int", "real"};
+        for (int mode = 0; mode < 3; mode++)
+        {
+        std::string name = prefix + "problem_" + modes[mode];
+		std::ofstream fout_LP(name + ".lp");
+		if (!fout_LP) break;
+		export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode);
+        }
 	}
 
 
