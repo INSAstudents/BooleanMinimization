@@ -54,7 +54,7 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
     }
     os << std::endl;
 
-    if (not binaries)
+    if (!binaries)
     {
 
     // Bounds
@@ -69,7 +69,7 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
 
     }
 
-    if (not reals)
+    if (!reals)
     {
 
     // x3
