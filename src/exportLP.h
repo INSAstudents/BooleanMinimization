@@ -29,7 +29,9 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
     for (big ipi = 0; ipi < pisize; ipi++)
     {
         if (ipi > 0) os << " + ";
-        os << 'x' << (ipi+1);
+		os << 'x';
+		print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
+		os << 'x';
     }
     os << std::endl;
     os << std::endl;
@@ -46,15 +48,17 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
         first = true;
         for (big ipi : mtpi)
         {
-        if (!first) os << " + ";
-        os << 'x' << (ipi+1);
-        first = false;
+			if (!first) os << " + ";
+			os << 'x';
+			print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
+			os << 'x';
+			first = false;
         }
         os << " >= 1" << std::endl;
     }
     os << std::endl;
 
-    if (not binaries)
+    if (!binaries)
     {
 
     // Bounds
@@ -63,13 +67,16 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
     os << "Bounds" << std::endl;
     for (big ipi = 0; ipi < pisize; ipi++)
     {
-        os << "0 <= " << 'x' << (ipi+1) << " <= 1" << std::endl;
+		os << "0 <= " << 'x';
+		print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
+		os << 'x';
+		os << " <= 1" << std::endl;
     }
     os << std::endl;
 
     }
 
-    if (not reals)
+    if (!reals)
     {
 
     // x3
@@ -80,29 +87,14 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
     for (big ipi = 0; ipi < pisize; ipi++)
     {
         if (!first) os << ' ';
-        os << 'x' << (ipi+1);
+		os << 'x';
+		print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
+		os << 'x';
         first = false;
     }
     os << std::endl;
-    os << std::endl;
-
+	os << std::endl;
     }
-
-    // \Values
-    // \x1=... x2=... ...
-
-    os << "\\ Values" << std::endl;
-    os << "\\ ";
-    first = true;
-    for (big ipi = 0; ipi < pisize; ipi++)
-    {
-        if (!first) os << ' ';
-        os << 'x' << (ipi+1) << '=';
-        print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
-        first = false;
-    }
-    os << std::endl;
-    os << std::endl;
 
     os << "End" << std::endl;
 }

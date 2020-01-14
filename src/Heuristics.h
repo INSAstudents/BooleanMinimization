@@ -1,5 +1,5 @@
 #pragma once
-
+#include "terms.h"
 #include "QuineMcCluskey.h"
 
 template <typename type>
