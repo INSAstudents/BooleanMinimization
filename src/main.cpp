@@ -84,6 +84,8 @@ bool parseArgs(const char* name, const char* choice, const char* heuristic)
 	return true;
 }
 
+#include "importCPLEX.h"
+
 int main(int argc, const char* argv[])
 {
 	init_LUTs();
@@ -154,6 +156,21 @@ int main(int argc, const char* argv[])
 //		std::cout << "Result:" << std::endl;
 //		print_table<with16bits>(std::cout, primeimplicants);
 //		std::cout << std::endl << std::endl;
+	}
+	}
+
+
+	termsprobs_t<with16bits> termsprobs;
+
+	{
+	std::ifstream fin_cplex(prefix + "CPLEX.txt");
+	if (fin_cplex) {
+		std::cout << "Loading CPLEX file..." << std::endl;
+		import_CPLEX<with16bits>(fin_cplex, termsprobs);
+
+		primeimplicants.clear();
+		for (auto& item : termsprobs) primeimplicants.push_back(item.first);
+		prefix += "CPLEX_";
 	}
 	}
 
