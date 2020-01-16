@@ -35,7 +35,7 @@ inline void print_bin_star(std::ostream& out, typename type::byte value, typenam
 {
 	for (typename type::byte bit = 1 << (type::bits_nb - 1); bit != 0; bit >>= 1)
 	{
-		out << ((stars & bit) != 0 ? '-' : ((value & bit) != 0 ? '1' : '0'));
+		out << ((stars & bit) != 0 ? '?' : ((value & bit) != 0 ? '1' : '0'));
 	}
 }
 
@@ -48,7 +48,7 @@ inline void unprint_bin_star(std::istream& in, typename type::byte& value, typen
 	for (typename type::byte bit = 1 << (type::bits_nb - 1); bit != 0; bit >>= 1)
 	{
 		in.get(c);
-		(c == '-' ? stars : (c == '1' ? value : bit)) |= bit;
+		(c == '?' ? stars : (c == '1' ? value : bit)) |= bit;
 	}
 }
 
