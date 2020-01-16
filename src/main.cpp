@@ -13,6 +13,7 @@
 #include "types.h"
 
 #include "exportLP.h"
+#include "cplexRun.h"
 
 
 struct {
@@ -83,6 +84,8 @@ bool parseArgs(const char* name, const char* choice, const char* heuristic)
 
 	return true;
 }
+
+#include "importCPLEX.h"
 
 int main(int argc, const char* argv[])
 {
@@ -158,6 +161,21 @@ int main(int argc, const char* argv[])
 	}
 
 
+	termsprobs_t<with16bits> termsprobs;
+
+	{
+	std::ifstream fin_cplex(prefix + "CPLEX.txt");
+	if (fin_cplex) {
+		std::cout << "Loading CPLEX file..." << std::endl;
+		import_CPLEX<with16bits>(fin_cplex, termsprobs);
+
+		primeimplicants.clear();
+		for (auto& item : termsprobs) primeimplicants.push_back(item.first);
+		prefix += "CPLEX_";
+	}
+	}
+
+
 	std::cout << "Computing prime implicants chart..." << std::endl;
 
 	chart_t<with16bits> mintermschart;
@@ -180,13 +198,15 @@ int main(int argc, const char* argv[])
 
 
 	{
-        const char* modes[3] = {"bin", "int", "real"};
-        for (int mode = 0; mode < 3; mode++)
+        const char* modes[2] = {"bin", "real"};
+        for (int mode = 0; mode < 2; mode++)
         {
         std::string name = prefix + "problem_" + modes[mode];
-		std::ofstream fout_LP(name + ".lp");
+		std::string fileName = name + ".lp";
+		std::ofstream fout_LP(fileName);
 		if (!fout_LP) break;
 		export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode);
+		run_Cplex(fileName);
         }
 	}
 
