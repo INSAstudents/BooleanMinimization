@@ -41,6 +41,7 @@ int main(int argc, const char* argv[])
 	cout << "Entrez le nom du fichier de solution... " << endl;
 	string fileName = "";
 	getline(cin,fileName);
+
 	
 	ifstream fileFlow(fileName);
 	if (!fileFlow)
@@ -51,12 +52,17 @@ int main(int argc, const char* argv[])
 	vector<implicant> implicants;
 	//unordered_map<string, string> terms;
 
+	int edgeSize = 10;
 	string line = "";
 	while (getline(fileFlow, line))
 	{
 		if (line.find("variable ") != -1)
 		{
 			vector<string> attributs = split(line);
+			if (attributs.back().find("reducedCost") != -1)
+			{
+				edgeSize = 8;
+			}
 			string name;
 			float value;
 			for (string attribut : attributs)
@@ -67,7 +73,7 @@ int main(int argc, const char* argv[])
 				}
 				else if (attribut.find("value") != -1)
 				{
-					value = atof(attribut.substr(7, attribut.size() - 10).c_str());
+					value = atof(attribut.substr(7, attribut.size() - edgeSize).c_str());
 				}
 			}
 			implicant curImp;
