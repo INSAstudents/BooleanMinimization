@@ -1,9 +1,8 @@
 #pragma once
 
+#include "terms.h"
+#include "types.h"
 #include "print.h"
-
-template <typename type>
-using termsprobs_t = std::vector<std::pair<typename type::pair, float>>;
 
 inline void swaphalves(with16bits::byte& word)
 {

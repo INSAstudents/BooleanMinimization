@@ -6,6 +6,8 @@ template <typename type>
 using minterms_t = std::vector<typename type::byte>;
 template <typename type>
 using terms_t = std::vector<typename type::pair>;
+template <typename type>
+using termsprobs_t = std::vector<std::pair<typename type::pair, float>>;
 
 template <typename type>
 inline bool minterm_match(const typename type::byte& lhs, const typename type::pair& rhs)

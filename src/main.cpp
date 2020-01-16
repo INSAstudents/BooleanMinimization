@@ -13,6 +13,7 @@
 #include "types.h"
 
 #include "exportLP.h"
+#include "importCPLEX.h"
 
 
 struct {
@@ -84,7 +85,6 @@ bool parseArgs(const char* name, const char* choice, const char* heuristic)
 	return true;
 }
 
-#include "importCPLEX.h"
 
 int main(int argc, const char* argv[])
 {
@@ -170,7 +170,6 @@ int main(int argc, const char* argv[])
 
 		primeimplicants.clear();
 		for (auto& item : termsprobs) primeimplicants.push_back(item.first);
-		prefix += "CPLEX_";
 	}
 	}
 
@@ -212,9 +211,16 @@ int main(int argc, const char* argv[])
 
 	terms_t<with16bits> primeimplicants_reduced;
 
+	if (!termsprobs.empty())
+	{
+		primeimplicants_reduce_step_threshold<with16bits>(minterms, termsprobs, mintermschart, primeimplicantschart, primeimplicants_reduced, 0.6f);
+		prefix += "0.6_";
+	}
+
 	{
 		std::ofstream fout_pireduced(prefix + "primeimplicants_reduced_" + names_heuristics[arguments.heuristic_index] + ".txt");
 		if (!fout_pireduced) return 1;
+
 		if (arguments.heuristic_index == 0)
 		{
 			minterms_t<with16bits> minterms_copy = minterms;

@@ -299,3 +299,45 @@ void primeimplicants_reduce_hope(const minterms_t<type>& minterms, const terms_t
 		chart_remove_pi(pos);
 	}
 }
+
+template <typename type>
+void primeimplicants_reduce_step_threshold(const minterms_t<type>& minterms, const termsprobs_t<type>& primeimplicantsprobs, chart_t<type>& mintermschart, chart_t<type>& primeimplicantschart, terms_t<type>& result, float threshold)
+{
+	using big = type::big;
+
+	big mtsize = static_cast<big>(minterms.size());
+	big pisize = static_cast<big>(primeimplicantsprobs.size());
+
+	auto chart_remove_mt = [&] (big imt)
+	{
+		auto& mtpi = mintermschart[imt];
+		for (big ipi : mtpi)
+		{
+			auto& pimt = primeimplicantschart[ipi];
+			pimt.erase(std::find(pimt.begin(), pimt.end(), imt));
+		}
+		mtpi.clear();
+	};
+
+	auto chart_remove_pi = [&] (big ipi)
+	{
+		result.push_back(primeimplicantsprobs[ipi].first);
+
+		auto& pimt = primeimplicantschart[ipi];
+		for (big imt : pimt)
+		{
+			auto& mtpi = mintermschart[imt];
+			mtpi.erase(std::find(mtpi.begin(), mtpi.end(), ipi));
+			chart_remove_mt(imt);
+		}
+		pimt.clear();
+	};
+
+	for (big ipi = 0; ipi < pisize; ipi++)
+	{
+		if (primeimplicantsprobs[ipi].second > threshold)
+		{
+			chart_remove_pi(ipi);
+		}
+	}
+}
