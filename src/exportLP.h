@@ -6,7 +6,7 @@
 
 
 template <typename type>
-void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimplicants, const chart_t<type>& mintermschart, const chart_t<type>& primeimplicantschart, std::ofstream& os, const char* name, int mode)
+void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimplicants, const chart_t<type>& mintermschart, const chart_t<type>& primeimplicantschart, std::ofstream& os, const char* name, int mode, bool pi_in_varsnames)
 {
 	using big = typename type::big;
 
@@ -17,6 +17,18 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
 	bool binaries = (mode == 0);
 	bool integers = (mode == 1);
 	bool reals = !(binaries || integers);
+
+	auto print_varname = [&] (int ipi) {
+		os << 'x';
+		if (pi_in_varsnames) {
+			print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
+			os << 'x';
+		}
+		else
+		{
+			os << (ipi + 1);
+		}
+	};
 
 	// \problem: AES =0
 	os << "\\problem: " << name << std::endl;
@@ -29,9 +41,7 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
 	for (big ipi = 0; ipi < pisize; ipi++)
 	{
 		if (ipi > 0) os << " + ";
-		os << 'x';
-		print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
-		os << 'x';
+		print_varname(ipi);
 	}
 	os << std::endl;
 	os << std::endl;
@@ -49,9 +59,7 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
 		for (big ipi : mtpi)
 		{
 			if (!first) os << " + ";
-			os << 'x';
-			print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
-			os << 'x';
+			print_varname(ipi);
 			first = false;
 		}
 		os << " >= 1" << std::endl;
@@ -67,9 +75,8 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
 		os << "Bounds" << std::endl;
 		for (big ipi = 0; ipi < pisize; ipi++)
 		{
-			os << "0 <= " << 'x';
-			print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
-			os << 'x';
+			os << "0 <= ";
+			print_varname(ipi);
 			os << " <= 1" << std::endl;
 		}
 		os << std::endl;
@@ -87,9 +94,26 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
 		for (big ipi = 0; ipi < pisize; ipi++)
 		{
 			if (!first) os << ' ';
-			os << 'x';
+			print_varname(ipi);
+			first = false;
+		}
+		os << std::endl;
+		os << std::endl;
+	}
+
+	if (!pi_in_varsnames)
+	{
+		// \Values
+		// \x1=... x2=... ...
+
+		os << "\\ Values" << std::endl;
+		os << "\\ ";
+		first = true;
+		for (big ipi = 0; ipi < pisize; ipi++)
+		{
+			if (!first) os << ' ';
+			os << 'x' << (ipi+1) << '=';
 			print_bin_star<type>(os, primeimplicants[ipi].first, primeimplicants[ipi].second);
-			os << 'x';
 			first = false;
 		}
 		os << std::endl;

@@ -202,7 +202,7 @@ int main(int argc, const char* argv[])
         std::string name = prefix + "problem_" + modes[mode];
 		std::ofstream fout_LP(name + ".lp");
 		if (!fout_LP) break;
-		export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode);
+		export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode, true);
         }
 	}
 
