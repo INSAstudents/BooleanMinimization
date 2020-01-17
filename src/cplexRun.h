@@ -61,7 +61,7 @@ void run_Cplex(std::string fileName)
 				counter++;
 			}
 		}
-		
+		Stats::setOutSize(counter);
 
 		std::string solutionFileName = "cplexSolution" + fileName.substr(0, fileName.size() - 3) + ".txt";
 		cplex.writeSolution(solutionFileName.c_str());
