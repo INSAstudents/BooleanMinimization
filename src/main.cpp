@@ -14,6 +14,7 @@
 
 #include "exportLP.h"
 #include "cplexRun.h"
+#include "stats.h"
 
 
 struct {
@@ -60,6 +61,12 @@ bool parseInt(const char* str, int& value)
 
 bool parseArgs(const char* name, const char* choice, const char* heuristic)
 {
+	///////////////EXAMPLE_STATS///////////
+	std::string sbox = name;
+	sbox += choice;
+	Stats::setSboxName(sbox);
+	Stats::setAlgo(heuristic);
+	//////////////////////////////////////
 	arguments.sbox_index = count_SBoxes;
 	for (int index = 0; index < count_SBoxes; index++) {
 		if (str_eq(name, names_SBoxes[index])) arguments.sbox_index = index;
@@ -91,10 +98,15 @@ int main(int argc, const char* argv[])
 {
 	init_LUTs();
 	init_SBoxes();
+	///////////////EXAMPLE_STATS///////////
+	Stats::initChrono();
+	//////////////////////////////////////
 
 	const char * name_value;
 	if (argc <= 1)
+	{
 		parseArgs(names_SBoxes[0], name_value = "!0", names_heuristics[count_heuristics - 2]);
+	}
 	else if ((argc != 4) || (!parseArgs(argv[1], name_value = argv[2], argv[3])))
 	{
 		std::cerr << "Incorrect command line arguments." << std::endl;
@@ -201,12 +213,19 @@ int main(int argc, const char* argv[])
         const char* modes[2] = {"bin", "real"};
         for (int mode = 0; mode < 2; mode++)
         {
-        std::string name = prefix + "problem_" + modes[mode];
-		std::string fileName = name + ".lp";
-		std::ofstream fout_LP(fileName);
-		if (!fout_LP) break;
-		export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode);
-		run_Cplex(fileName);
+			///////////////EXAMPLE_STATS INDEX TIME///////////
+			Stats::setChronoWithIndex(modes[mode], ClockState::START);
+			//////////////////////////////////////
+			std::string name = prefix + "problem_" + modes[mode];
+			std::string fileName = name + ".lp";
+			std::ofstream fout_LP(fileName);
+			if (!fout_LP) break;
+			export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode);
+			run_Cplex(fileName);
+			///////////////EXAMPLE_STATS///////////
+			Stats::setChronoWithIndex(modes[mode], ClockState::END);
+			Stats::writeStats();
+			//////////////////////////////////////
         }
 	}
 
@@ -260,6 +279,8 @@ int main(int argc, const char* argv[])
 
 
 	std::cout << "Done." << std::endl;
-
+	///////////////EXAMPLE_STATS///////////
+	//Stats::writeStats();
+	//////////////////////////////////////
 	return 0;
 }

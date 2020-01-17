@@ -4,6 +4,7 @@
 #include <string>
 #include <ilcplex/ilocplex.h>
 #include "PrimeImplFromCplex.h"
+#include "stats.h"
 
 ILOCONTINUOUSCALLBACK1(dataCallBack,
 	IloNum, timeStart)
@@ -17,7 +18,6 @@ ILOCONTINUOUSCALLBACK1(dataCallBack,
 void run_Cplex(std::string fileName)
 {
 	IloEnv env;
-
 	try {
 		IloModel model(env);
 		IloCplex cplex(env);
@@ -26,15 +26,43 @@ void run_Cplex(std::string fileName)
 		IloNumVarArray var(env);
 		IloRangeArray  rng(env);
 
-		cplex.use(dataCallBack(env, cplex.getCplexTime()));
+		//setup callback for cplex
+		//cplex.use(dataCallBack(env, cplex.getCplexTime()));
 		cplex.importModel(model, fileName.c_str(), obj, var, rng);
 
 		cplex.extract(model);
 		
 		if (!cplex.solve()) {
 			env.error() << "Failed to optimize LP model : " << fileName << std::endl;
+			Stats::setSolutionState(SolutionState::ERROR);
 			return;
 		}
+		if (cplex.getStatus() == IloCplex::Optimal)
+		{
+			Stats::setSolutionState(SolutionState::OPTIMAL);
+		}
+		else if (cplex.getStatus() == IloCplex::Feasible)
+		{
+			Stats::setSolutionState(SolutionState::FEASIBLE);
+		}
+		else if (cplex.getStatus() == IloCplex::Infeasible)
+		{
+			Stats::setSolutionState(SolutionState::INFEASIBLE);
+		}
+		
+		IloNumArray vals(env);
+		int counter = 0;
+		cplex.getValues(vals, var);
+		for (int i(0); i < vals.getSize(); i++)
+		{
+			if (vals[i] > 0)
+			{
+				counter++;
+			}
+		}
+		Stats::setOutSize(counter);
+		
+
 		std::string solutionFileName = "cplexSolutions/cplexSolution" + fileName.substr(0, fileName.size() - 3) + ".txt";
 		std::string PrimeImplicantFileName = "cplexSolutions/PrimeImpl" + fileName.substr(0, fileName.size() - 3) + ".txt";
 		cplex.writeSolution(solutionFileName.c_str());
@@ -47,4 +75,6 @@ void run_Cplex(std::string fileName)
 		std::cerr << "Unknown Exception" << std::endl;
 	}
 	env.end();
+	Stats::closeChrono();
+	
 }
