@@ -51,7 +51,7 @@ void Stats::writeStats()
 {
 	if (executionTime == 0)
 	{
-		executionTime = clock(); - startChrono;
+		executionTime = clock() - startChrono;
 	}
 	//create stats line information
 	std::string statLine = sbox + " " + probability + " " + algo + " " + std::to_string(inSize) + " " + std::to_string(outSize) + " " + std::to_string(executionTime);
