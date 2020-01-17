@@ -29,6 +29,7 @@ void run_Cplex(std::string fileName)
 		//setup callback for cplex
 		//cplex.use(dataCallBack(env, cplex.getCplexTime()));
 		cplex.importModel(model, fileName.c_str(), obj, var, rng);
+		cplex.setParam(IloCplex::TiLim, 12000);
 
 		cplex.extract(model);
 		
