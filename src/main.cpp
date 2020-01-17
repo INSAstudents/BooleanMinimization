@@ -62,9 +62,8 @@ bool parseInt(const char* str, int& value)
 bool parseArgs(const char* name, const char* choice, const char* heuristic)
 {
 	///////////////EXAMPLE_STATS///////////
-	std::string sbox = name;
-	sbox += choice;
-	Stats::setSboxName(sbox);
+	Stats::setSboxName(name);
+	Stats::setProbability(choice);
 	Stats::setAlgo(heuristic);
 	//////////////////////////////////////
 	arguments.sbox_index = count_SBoxes;
@@ -224,7 +223,7 @@ int main(int argc, const char* argv[])
 			run_Cplex(fileName);
 			///////////////EXAMPLE_STATS///////////
 			Stats::setChronoWithIndex(modes[mode], ClockState::END);
-			Stats::writeStats();
+
 			//////////////////////////////////////
         }
 	}
@@ -280,7 +279,7 @@ int main(int argc, const char* argv[])
 
 	std::cout << "Done." << std::endl;
 	///////////////EXAMPLE_STATS///////////
-	//Stats::writeStats();
+	Stats::writeStats();
 	//////////////////////////////////////
 	return 0;
 }

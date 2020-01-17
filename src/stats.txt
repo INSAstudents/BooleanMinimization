@@ -1,0 +1,7 @@
+Sbox Probability Algorithm SystemSizeIn SystemSizeOut Duration [SOLUTION STATUS]
+M0 !0 fastest 9801 2597 5998
+	bin : 2733
+	real : 2703
+M1 =0 fastest 258 112 10810
+	bin : 4879
+	real : 4351

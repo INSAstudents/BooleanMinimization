@@ -1,6 +1,7 @@
 #include "stats.h"
 #include <iostream>
 #include <fstream>
+#include <time.h>
 
 time_t Stats::startChrono;
 time_t Stats::endChrono;
@@ -17,12 +18,13 @@ std::unordered_map<std::string, std::pair<time_t, time_t>> Stats::timeCuts;
 
 void Stats::initChrono()
 {
-	startChrono = time(NULL);
+	
+	startChrono = clock();
 }
 
 void Stats::closeChrono()
 {
-	endChrono = time(NULL);
+	endChrono = clock();
 	executionTime = endChrono - startChrono;
 }
 
@@ -30,13 +32,13 @@ void Stats::setChronoWithIndex(std::string index, ClockState state)
 {
 	if (state == ClockState::START)
 	{
-		timeCuts[index].first = time(NULL);
+		timeCuts[index].first = clock();
 		timeCuts[index].second = NULL;
 	}
 
 	else if (state == ClockState::END)
 	{
-		timeCuts[index].second = time(NULL);
+		timeCuts[index].second = clock();
 		if (timeCuts[index].first == NULL)
 		{
 			timeCuts[index].first = startChrono;
@@ -49,10 +51,10 @@ void Stats::writeStats()
 {
 	if (executionTime == 0)
 	{
-		executionTime = time(NULL) - startChrono;
+		executionTime = clock(); - startChrono;
 	}
 	//create stats line information
-	std::string statLine = sbox + " " + algo + " " + std::to_string(inSize) + " " + std::to_string(outSize) + " " + std::to_string(executionTime);
+	std::string statLine = sbox + " " + probability + " " + algo + " " + std::to_string(inSize) + " " + std::to_string(outSize) + " " + std::to_string(executionTime);
 	switch (state)
 	{
 	case OPTIMAL:
@@ -112,7 +114,7 @@ void Stats::setSboxName(std::string pSbox)
 	sbox = pSbox;
 }
 
-void Stats::setprobability(std::string pProbability)
+void Stats::setProbability(std::string pProbability)
 {
 	probability = pProbability;
 }

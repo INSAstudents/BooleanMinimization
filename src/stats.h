@@ -17,7 +17,7 @@ public:
 	static void writeStats();
 
 	static void setSboxName(std::string pMethode);
-	static void setprobability(std::string pProbability);
+	static void setProbability(std::string pProbability);
 	static void setAlgo(std::string pAlgo);
 	static void setInSize(int pInSize);
 	static void setOutSize(int pOutSize);
