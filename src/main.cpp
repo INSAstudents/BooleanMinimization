@@ -114,9 +114,12 @@ int main(int argc, const char* argv[])
 
 	DDT_t<with8bits> DDT = {};
 
+#ifdef PROGRESS
 	{
 	std::ifstream fin_DDT(prefix + "_DDT.txt");
+#endif
 	fill_DDT<with8bits>(SBox, DDT);
+#ifdef PROGRESS
 	if (!fin_DDT) {
 		std::ofstream fout_DDT(prefix + "_DDT.txt");
 		if (!fout_DDT) return 1;
@@ -127,6 +130,7 @@ int main(int argc, const char* argv[])
 //		std::cout << std::endl << std::endl;
 	}
 	}
+#endif
 
 
 	prefix = prefix + name_value + "_";
@@ -139,6 +143,7 @@ int main(int argc, const char* argv[])
 
 	terms_t<with16bits> primeimplicants;
 
+#ifdef PROGRESS
 	{
 	std::ifstream fin_pi(prefix + "primeimplicants.txt");
 	if (fin_pi) {
@@ -147,10 +152,12 @@ int main(int argc, const char* argv[])
 	else {
 		std::ofstream fout_pi(prefix + "primeimplicants.txt");
 		if (!fout_pi) return 1;
+#endif
 
 		QuineMcCluskey<with16bits>(minterms, termsmap);
 		termsmap_extract_primeimplicants<with16bits>(termsmap, primeimplicants);
 
+#ifdef PROGRESS
 		print_terms<with16bits>(fout_pi, primeimplicants);
 
 //		std::cout << "Result:" << std::endl;
@@ -158,6 +165,7 @@ int main(int argc, const char* argv[])
 //		std::cout << std::endl << std::endl;
 	}
 	}
+#endif
 
 
 	termsprobs_t<with16bits> termsprobs;
@@ -179,6 +187,7 @@ int main(int argc, const char* argv[])
 	chart_t<with16bits> mintermschart;
 	chart_t<with16bits> primeimplicantschart;
 
+#ifdef PROGRESS
 	{
 	std::ifstream fin_chart(prefix + "chart.txt");
 	if (fin_chart) {
@@ -188,11 +197,14 @@ int main(int argc, const char* argv[])
 	else {
 		std::ofstream fout_chart(prefix + "chart.txt");
 		if (!fout_chart) return 1;
+#endif
 		fill_chart<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart);
+#ifdef PROGRESS
 		print_chart<with16bits>(fout_chart, mintermschart);
 		print_chart<with16bits>(fout_chart, primeimplicantschart);
 	}
 	}
+#endif
 
 
 	{
@@ -217,9 +229,11 @@ int main(int argc, const char* argv[])
 		prefix += "0.6_";
 	}
 
+#ifdef PROGRESS
 	{
 		std::ofstream fout_pireduced(prefix + "primeimplicants_reduced_" + names_heuristics[arguments.heuristic_index] + ".txt");
 		if (!fout_pireduced) return 1;
+#endif
 
 		if (arguments.heuristic_index == 0)
 		{
@@ -231,12 +245,14 @@ int main(int argc, const char* argv[])
 		{
 			(*array_heuristics[arguments.heuristic_index])(minterms, primeimplicants, mintermschart, primeimplicantschart, primeimplicants_reduced);
 		}
+#ifdef PROGRESS
 		print_terms<with16bits>(fout_pireduced, primeimplicants_reduced);
 
 //		std::cout << "Result:" << std::endl;
 //		print_terms(std::cout, primeimplicants_reduced);
 //		std::cout << std::endl << std::endl;
 	}
+#endif
 
 
 	{
@@ -245,9 +261,13 @@ int main(int argc, const char* argv[])
 	terms_t<with16bits> primeimplicants_reduced;
 
 	{
+#ifdef PROGRESS
 		std::ifstream fin_pireduced(prefix + "primeimplicants_reduced_" + names_heuristics[arguments.heuristic_index] + ".txt");
 		if (!fin_pireduced) return 1;
 		unprint_terms<with16bits>(fin_pireduced, primeimplicants_reduced);
+#else
+		primeimplicants_reduced = std::move(primeimplicants);
+#endif
 
 		bool correct = check<with16bits>(minterms, primeimplicants_reduced);
 		if (correct)
