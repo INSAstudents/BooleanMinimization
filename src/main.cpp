@@ -14,6 +14,8 @@
 
 #include "exportLP.h"
 #include "importCPLEX.h"
+#include "cplexRun.h"
+#include "stats.h"
 
 
 struct {
@@ -67,6 +69,11 @@ bool parseArgs(const char* name, const char* choice, const char* heuristic, cons
 bool parseArgs(const char* name, const char* choice, const char* heuristic)
 #endif
 {
+	///////////////STATS///////////
+	Stats::setSboxName(name);
+	Stats::setProbability(choice);
+	Stats::setAlgo(heuristic);
+	//////////////////////////////////////
 	arguments.sbox_index = count_SBoxes;
 	for (int index = 0; index < count_SBoxes; index++) {
 		if (str_eq(name, names_SBoxes[index])) arguments.sbox_index = index;
@@ -113,6 +120,9 @@ int main(int argc, const char* argv[])
 {
 	init_LUTs();
 	init_SBoxes();
+	/////////////////STATS////////////////
+	Stats::initChrono();
+	//////////////////////////////////////
 
 	const char * name_value;
 #ifdef CPLEX
@@ -185,6 +195,9 @@ int main(int argc, const char* argv[])
 
 		QuineMcCluskey<with16bits>(minterms, termsmap);
 		termsmap_extract_primeimplicants<with16bits>(termsmap, primeimplicants);
+		/////////////////STATS////////////////
+		Stats::setInSize(primeimplicants.size());
+		//////////////////////////////////////
 
 #ifdef PROGRESS
 		print_terms<with16bits>(fout_pi, primeimplicants);
@@ -195,6 +208,21 @@ int main(int argc, const char* argv[])
 	}
 	}
 #endif
+
+
+	/*termsprobs_t<with16bits> termsprobs;
+
+	{
+	std::ifstream fin_cplex(prefix + "CPLEX.txt");
+	if (fin_cplex) {
+		std::cout << "Loading CPLEX file..." << std::endl;
+		import_CPLEX<with16bits>(fin_cplex, termsprobs);
+
+		primeimplicants.clear();
+		for (auto& item : termsprobs) primeimplicants.push_back(item.first);
+		prefix += "CPLEX_";
+	}
+	}*/
 
 
 	std::cout << "Computing prime implicants chart..." << std::endl;
@@ -228,23 +256,20 @@ int main(int argc, const char* argv[])
         const char* modes[3] = {"bin", "int", "real"};
 		int mode = arguments.cplex_mode;
         //for (int mode = 0; mode < 3; mode++)
-        {
-        std::string name = prefix + "problem_" + modes[mode];
-		std::ofstream fout_LP(name + ".lp");
-		if (!fout_LP) return 1; // break;
-		export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode, true);
-        }
-
-		// TODO:
-		// CPLEX.import_LP_file(name + ".lp");
-		// CPLEX.export_solution(prefix + "CPLEX.txt");
+		//{
+			std::string name = prefix + "problem_" + modes[mode];
+			std::ofstream fout_LP(name + ".lp");
+			if (!fout_LP) return 1; // break;
+			export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode, true);
+		//}
+		run_Cplex(name + ".lp");
+		writePrimeImplicantsFromCplex("cplexSolution"+name+".txt", prefix + "CPLEX.txt");
 	}
 #endif
 
-
-#ifdef CPLEX
 	termsprobs_t<with16bits> termsprobs;
-
+#ifdef CPLEX
+	
 	if (arguments.cplex_mode >= 0)
 	{
 	std::ifstream fin_cplex(prefix + "CPLEX.txt");
@@ -338,11 +363,17 @@ int main(int argc, const char* argv[])
 		if (!fout_result) return 1;
 		std::vector<std::pair<typename with8bits::pair,typename with8bits::pair>> result;
 		terms_split<with16bits,with8bits>(primeimplicants_reduced, result);
+		/////////////////STATS////////////////
+		Stats::setOutSize(result.size());
+		//////////////////////////////////////
 		print_termshalf<with8bits>(fout_result, result);
 	}
 
 
 	std::cout << "Done." << std::endl;
-
+	///////////////EXAMPLE_STATS///////////
+	Stats::closeChrono();
+	Stats::writeStats();
+	//////////////////////////////////////
 	return 0;
 }
