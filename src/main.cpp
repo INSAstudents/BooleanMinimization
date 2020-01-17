@@ -21,6 +21,9 @@ struct {
 	bool keep;
 	int value;
 	int heuristic_index;
+#ifdef CPLEX
+	int cplex_mode;
+#endif
 } arguments;
 
 static const int count_SBoxes = 5;
@@ -58,7 +61,11 @@ bool parseInt(const char* str, int& value)
 	}
 }
 
+#ifdef CPLEX
+bool parseArgs(const char* name, const char* choice, const char* heuristic, const char* cplex)
+#else
 bool parseArgs(const char* name, const char* choice, const char* heuristic)
+#endif
 {
 	arguments.sbox_index = count_SBoxes;
 	for (int index = 0; index < count_SBoxes; index++) {
@@ -76,11 +83,27 @@ bool parseArgs(const char* name, const char* choice, const char* heuristic)
 	if (!parseInt(++choice, arguments.value))
 		return false;
 
-	arguments.heuristic_index = count_heuristics;
+	arguments.heuristic_index = -1;
 	for (int index = 0; index < count_heuristics; index++) {
 		if (str_eq(heuristic, names_heuristics[index])) arguments.heuristic_index = index;
 	}
-	if (arguments.heuristic_index == count_heuristics) return false;
+#ifdef CPLEX
+
+	if (str_eq(cplex, "CPLEX"))
+	{
+		arguments.cplex_mode = -1;
+		if (str_eq(heuristic, "bool")) arguments.cplex_mode = 0;
+		if (str_eq(heuristic, "int")) arguments.cplex_mode = 1;
+		if (str_eq(heuristic, "real")) arguments.cplex_mode = 2;
+		if (str_eq(heuristic, "threshold")) arguments.heuristic_index = count_heuristics;
+		if (arguments.heuristic_index != -1) arguments.cplex_mode = 2;
+
+		if (arguments.cplex_mode == -1) return false;
+	}
+
+#else
+	if (arguments.heuristic_index == -1) return false;
+#endif
 
 	return true;
 }
@@ -92,9 +115,15 @@ int main(int argc, const char* argv[])
 	init_SBoxes();
 
 	const char * name_value;
+#ifdef CPLEX
+	if (argc <= 1)
+		parseArgs(names_SBoxes[0], name_value = "!0", names_heuristics[count_heuristics - 2], "");
+	else if ((argc > 5) || (!parseArgs(argv[1], name_value = argv[2], argv[3], argv[4])))
+#else
 	if (argc <= 1)
 		parseArgs(names_SBoxes[0], name_value = "!0", names_heuristics[count_heuristics - 2]);
 	else if ((argc != 4) || (!parseArgs(argv[1], name_value = argv[2], argv[3])))
+#endif
 	{
 		std::cerr << "Incorrect command line arguments." << std::endl;
 		return 1;
@@ -168,20 +197,6 @@ int main(int argc, const char* argv[])
 #endif
 
 
-	termsprobs_t<with16bits> termsprobs;
-
-	{
-	std::ifstream fin_cplex(prefix + "CPLEX.txt");
-	if (fin_cplex) {
-		std::cout << "Loading CPLEX file..." << std::endl;
-		import_CPLEX<with16bits>(fin_cplex, termsprobs);
-
-		primeimplicants.clear();
-		for (auto& item : termsprobs) primeimplicants.push_back(item.first);
-	}
-	}
-
-
 	std::cout << "Computing prime implicants chart..." << std::endl;
 
 	chart_t<with16bits> mintermschart;
@@ -207,27 +222,63 @@ int main(int argc, const char* argv[])
 #endif
 
 
+#ifdef CPLEX
+	if (arguments.cplex_mode >= 0)
 	{
         const char* modes[3] = {"bin", "int", "real"};
-        for (int mode = 0; mode < 3; mode++)
+		int mode = arguments.cplex_mode;
+        //for (int mode = 0; mode < 3; mode++)
         {
         std::string name = prefix + "problem_" + modes[mode];
 		std::ofstream fout_LP(name + ".lp");
-		if (!fout_LP) break;
+		if (!fout_LP) return 1; // break;
 		export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode, true);
         }
+
+		// TODO:
+		// CPLEX.import_LP_file(name + ".lp");
+		// CPLEX.export_solution(prefix + "CPLEX.txt");
 	}
+#endif
 
 
-	std::cout << "Computing " << names_heuristics[arguments.heuristic_index] << " reduction..." << std::endl;
+#ifdef CPLEX
+	termsprobs_t<with16bits> termsprobs;
 
+	if (arguments.cplex_mode >= 0)
+	{
+	std::ifstream fin_cplex(prefix + "CPLEX.txt");
+	if (fin_cplex) {
+		std::cout << "Loading CPLEX file..." << std::endl;
+		import_CPLEX<with16bits>(fin_cplex, termsprobs);
+
+		primeimplicants.clear();
+		for (auto& item : termsprobs) primeimplicants.push_back(item.first);
+
+	std::cout << "Computing CPLEX prime implicants chart..." << std::endl;
+
+	mintermschart.clear();
+	primeimplicantschart.clear();
+	fill_chart<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart);
+
+	}
+	}
+#endif
+
+	
 	terms_t<with16bits> primeimplicants_reduced;
 
-	if (!termsprobs.empty())
+	if (arguments.heuristic_index == count_heuristics)
 	{
-		primeimplicants_reduce_step_threshold<with16bits>(minterms, termsprobs, mintermschart, primeimplicantschart, primeimplicants_reduced, 0.6f);
-		prefix += "0.6_";
+		if (!termsprobs.empty())
+		{
+			primeimplicants_reduce_step_threshold<with16bits>(minterms, termsprobs, mintermschart, primeimplicantschart, primeimplicants_reduced, 0.6f);
+			prefix += "0.6_";
+		}
+		arguments.heuristic_index = 3; // mostlikely
 	}
+
+	std::cout << "Computing " << names_heuristics[arguments.heuristic_index] << " reduction..." << std::endl;
 
 #ifdef PROGRESS
 	{
