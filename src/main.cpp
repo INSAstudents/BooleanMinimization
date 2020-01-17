@@ -322,7 +322,7 @@ int main(int argc, const char* argv[])
 	{
 		std::cout << "Checking reduction..." << std::endl;
 
-		//terms_t<with16bits> primeimplicants_reduced;
+		terms_t<with16bits> primeimplicants_reduced;
 
 		{
 #ifdef PROGRESS
