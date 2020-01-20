@@ -268,6 +268,7 @@ int main(int argc, const char* argv[])
 	
 	terms_t<with16bits> primeimplicants_reduced;
 
+#ifdef CPLEX
 	if (arguments.heuristic_index == count_heuristics)
 	{
 		if (!termsprobs.empty())
@@ -277,7 +278,10 @@ int main(int argc, const char* argv[])
 		}
 		arguments.heuristic_index = 3; // mostlikely
 	}
+#endif
 
+if (arguments.heuristic_index >= 0)
+{
 	std::cout << "Computing " << names_heuristics[arguments.heuristic_index] << " reduction..." << std::endl;
 
 #ifdef PROGRESS
@@ -304,6 +308,7 @@ int main(int argc, const char* argv[])
 //		std::cout << std::endl << std::endl;
 	}
 #endif
+}
 
 
 	{
