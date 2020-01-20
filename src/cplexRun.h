@@ -28,13 +28,24 @@ void run_Cplex(std::string fileName)
 		IloNumVarArray var(env);
 		IloRangeArray  rng(env);
 
+		
 		//setup callback for cplex
 		//cplex.use(dataCallBack(env, cplex.getCplexTime()));
-		cplex.importModel(model, fileName.c_str(), obj, var, rng);
-		cplex.setParam(IloCplex::TiLim, 12000);
 
+		cplex.importModel(model, fileName.c_str(), obj, var, rng);
 		cplex.extract(model);
-		
+
+#ifdef CPLEX_GRAPH	
+		for (int i = 1; i < 13000; i = i * 1.4 + 1)
+		{
+			cplex.extract(model);
+			std::cout << "////////////////////////    " << i << std::endl;
+			cplex.setParam(IloCplex::TiLim, i);
+			Stats::initChrono();
+#else
+		cplex.setParam(IloCplex::TiLim, 12000);
+#endif
+
 		if (!cplex.solve()) {
 			env.error() << "Failed to optimize LP model : " << fileName << std::endl;
 			Stats::setSolutionState(SolutionState::ERROR);
@@ -52,7 +63,7 @@ void run_Cplex(std::string fileName)
 		{
 			Stats::setSolutionState(SolutionState::INFEASIBLE);
 		}
-		
+
 		IloNumArray vals(env);
 		int counter = 0;
 		cplex.getValues(vals, var);
@@ -64,6 +75,13 @@ void run_Cplex(std::string fileName)
 			}
 		}
 		Stats::setOutSize(counter);
+#ifdef CPLEX_GRAPH	
+		Stats::setChronoWithIndex("Solution " + std::to_string(cplex.getSolnPoolNsolns()) + " " + std::to_string(counter), ClockState::END);
+		cplex.clear();
+		}
+#endif
+
+		
 
 		std::string solutionFileName = "cplexSolution" + fileName.substr(0, fileName.size() - 3) + ".txt";
 		cplex.writeSolution(solutionFileName.c_str());
