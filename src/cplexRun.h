@@ -36,8 +36,9 @@ void run_Cplex(std::string fileName)
 		cplex.extract(model);
 
 #ifdef CPLEX_GRAPH	
-		for (int i = 1; i < 13000; i = i * 1.4 + 1)
+		for (int i = 1; i < 13; i = i * 1.3 + 1)
 		{
+			cplex.clear();
 			cplex.extract(model);
 			std::cout << "////////////////////////    " << i << std::endl;
 			cplex.setParam(IloCplex::TiLim, i);
@@ -77,11 +78,8 @@ void run_Cplex(std::string fileName)
 		Stats::setOutSize(counter);
 #ifdef CPLEX_GRAPH	
 		Stats::setChronoWithIndex("Solution " + std::to_string(cplex.getSolnPoolNsolns()) + " " + std::to_string(counter), ClockState::END);
-		cplex.clear();
 		}
 #endif
-
-		
 
 		std::string solutionFileName = "cplexSolution" + fileName.substr(0, fileName.size() - 3) + ".txt";
 		cplex.writeSolution(solutionFileName.c_str());
