@@ -10,8 +10,8 @@ time_t Stats::executionTime;
 std::string Stats::sbox = "unknown";
 std::string Stats::algo = "unknown";
 std::string Stats::probability = "unknown";
-int Stats::inSize = 0;
-int Stats::outSize = 0;
+size_t Stats::inSize = 0;
+size_t Stats::outSize = 0;
 SolutionState Stats::state = SolutionState::NONE;
 
 std::unordered_map<std::string, std::pair<time_t, time_t>> Stats::timeCuts;
@@ -124,12 +124,12 @@ void Stats::setAlgo(std::string pAlgo)
 	algo = pAlgo;
 }
 
-void Stats::setInSize(int pInSize)
+void Stats::setInSize(size_t pInSize)
 {
 	inSize = pInSize;
 }
 
-void Stats::setOutSize(int pOutSize)
+void Stats::setOutSize(size_t pOutSize)
 {
 	outSize = pOutSize;
 }

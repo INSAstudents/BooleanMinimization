@@ -1,3 +1,5 @@
+#ifdef CPLEX
+
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -76,3 +78,5 @@ void run_Cplex(std::string fileName)
 	Stats::closeChrono();
 	
 }
+
+#endif

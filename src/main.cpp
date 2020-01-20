@@ -36,6 +36,10 @@ static const int count_heuristics = 5;
 static const char * const names_heuristics[count_heuristics] = { "fastest", "maxmt", "maxmtminpi", "mostlikely", "petrick" };
 typedef void(*heuristic_ptr) (const minterms_t<with16bits>&, const terms_t<with16bits>&, chart_t<with16bits>&, chart_t<with16bits>&, terms_t<with16bits>&);
 static const heuristic_ptr array_heuristics[count_heuristics] = { &primeimplicants_reduce_good<with16bits>, &primeimplicants_reduce_good<with16bits>, &primeimplicants_reduce_well<with16bits>, &primeimplicants_reduce_hope<with16bits>, &PetricksMethod<with16bits> };
+#ifdef CPLEX
+static const int count_CPLEXmodes = 3;
+static const char * const names_CPLEXmodes[count_CPLEXmodes] = { "bool", "int", "real" };
+#endif
 
 bool str_eq(const char* str, const char* str2)
 {
@@ -320,20 +324,21 @@ if (arguments.heuristic_index >= 0)
 	}
 #endif
 }
+else
+{
+	primeimplicants_reduced = std::move(primeimplicants);
+}
 
 
 	{
 		std::cout << "Checking reduction..." << std::endl;
 
-		terms_t<with16bits> primeimplicants_reduced;
-
 		{
 #ifdef PROGRESS
 			std::ifstream fin_pireduced(prefix + "primeimplicants_reduced_" + names_heuristics[arguments.heuristic_index] + ".txt");
 			if (!fin_pireduced) return 1;
+			primeimplicants_reduced.clear();
 			unprint_terms<with16bits>(fin_pireduced, primeimplicants_reduced);
-#else
-			primeimplicants_reduced = std::move(primeimplicants);
 #endif
 
 			bool correct = check<with16bits>(minterms, primeimplicants_reduced);
@@ -349,9 +354,10 @@ if (arguments.heuristic_index >= 0)
 	}
 
 
-	if(arguments.heuristic_index != -1)
 	{
-		std::ofstream fout_result(prefix + "primeimplicants_reduced_" + names_heuristics[arguments.heuristic_index] + ".txt");
+		std::ofstream fout_result(prefix + "primeimplicants_reduced_" + (
+			arguments.heuristic_index >= 0 ? names_heuristics[arguments.heuristic_index] : names_CPLEXmodes[arguments.cplex_mode]
+		) + ".txt");
 		if (!fout_result) return 1;
 		std::vector<std::pair<typename with8bits::pair, typename with8bits::pair>> result;
 		terms_split<with16bits, with8bits>(primeimplicants_reduced, result);

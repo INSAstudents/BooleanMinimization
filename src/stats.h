@@ -19,8 +19,8 @@ public:
 	static void setSboxName(std::string pMethode);
 	static void setProbability(std::string pProbability);
 	static void setAlgo(std::string pAlgo);
-	static void setInSize(int pInSize);
-	static void setOutSize(int pOutSize);
+	static void setInSize(size_t pInSize);
+	static void setOutSize(size_t pOutSize);
 	static void setSolutionState(SolutionState pState);
 
 
@@ -33,8 +33,8 @@ private:
 	static std::string sbox;
 	static std::string probability;
 	static std::string algo;
-	static int inSize;
-	static int outSize;
+	static size_t inSize;
+	static size_t outSize;
 	static SolutionState state;
 
 	static std::unordered_map<std::string, std::pair<time_t, time_t>> timeCuts;

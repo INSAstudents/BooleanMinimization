@@ -1,3 +1,5 @@
+#ifdef CPLEX
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -84,11 +86,12 @@ void writePrimeImplicantsFromCplex(std::string fileName, std::string outputFileN
 	{
 		std::cout << "Erreur durant l'écriture de la solution" << std::endl;
 	}
-	int implicantsSize = implicants.size() - 1;
+	int implicantsSize = implicants.size();
 	int implicantNameSize = implicants[0].name.size();
 	for (int i(0); i < implicantsSize; i++)
 	{
-		outFlow << implicants[i].name.substr(1, implicantNameSize - 2) << " " << implicants[i].value << std::endl;
+		outFlow << std::endl << implicants[i].name.substr(1, implicantNameSize - 2) << " " << implicants[i].value;
 	}
-	outFlow << implicants[implicantsSize].name.substr(1, implicantNameSize - 2) << " " << implicants[implicantsSize].value;
 }
+
+#endif
