@@ -11,6 +11,9 @@ void export_LP(const minterms_t<type>& minterms, const terms_t<type>& primeimpli
 	using big = typename type::big;
 
 	const big pisize = static_cast<big>(primeimplicants.size());
+	///////////////EXAMPLE_STATS///////////
+	Stats::setInSize(pisize);
+	//////////////////////////////////////
 	const big mtsize = static_cast<big>(minterms.size());
 	bool first;
 

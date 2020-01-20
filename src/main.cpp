@@ -14,6 +14,8 @@
 
 #include "exportLP.h"
 #include "importCPLEX.h"
+#include "cplexRun.h"
+#include "stats.h"
 
 
 struct {
@@ -27,17 +29,17 @@ struct {
 } arguments;
 
 static const int count_SBoxes = 5;
-static const char * const names_SBoxes[count_SBoxes] = {"AES", "M0", "M1", "M2", "M3"};
-typedef const uint8_t (*sbox_ptr)[256];
+static const char * const names_SBoxes[count_SBoxes] = { "AES", "M0", "M1", "M2", "M3" };
+typedef const uint8_t(*sbox_ptr)[256];
 static const sbox_ptr array_SBoxes[count_SBoxes] = { &SBox_AES, &SBox_Midori128_S0, &SBox_Midori128_S1, &SBox_Midori128_S2, &SBox_Midori128_S3 };
 static const int count_heuristics = 5;
-static const char * const names_heuristics[count_heuristics] = {"fastest", "maxmt", "maxmtminpi", "mostlikely", "petrick"};
-typedef void (*heuristic_ptr) (const minterms_t<with16bits>&, const terms_t<with16bits>&, chart_t<with16bits>&, chart_t<with16bits>&, terms_t<with16bits>&);
+static const char * const names_heuristics[count_heuristics] = { "fastest", "maxmt", "maxmtminpi", "mostlikely", "petrick" };
+typedef void(*heuristic_ptr) (const minterms_t<with16bits>&, const terms_t<with16bits>&, chart_t<with16bits>&, chart_t<with16bits>&, terms_t<with16bits>&);
 static const heuristic_ptr array_heuristics[count_heuristics] = { &primeimplicants_reduce_good<with16bits>, &primeimplicants_reduce_good<with16bits>, &primeimplicants_reduce_well<with16bits>, &primeimplicants_reduce_hope<with16bits>, &PetricksMethod<with16bits> };
 
 bool str_eq(const char* str, const char* str2)
 {
-	for(;;)
+	for (;;)
 	{
 		char c = *str++;
 		if (c != *str2++) return false;
@@ -48,7 +50,7 @@ bool str_eq(const char* str, const char* str2)
 bool parseInt(const char* str, int& value)
 {
 	value = 0;
-	for(;;)
+	for (;;)
 	{
 		char c = *str++;
 
@@ -67,6 +69,11 @@ bool parseArgs(const char* name, const char* choice, const char* heuristic, cons
 bool parseArgs(const char* name, const char* choice, const char* heuristic)
 #endif
 {
+	////////////STATS/////////////
+	Stats::setSboxName(name);
+	Stats::setProbability(choice);
+	Stats::setAlgo(heuristic);
+	/////////////////////////////
 	arguments.sbox_index = count_SBoxes;
 	for (int index = 0; index < count_SBoxes; index++) {
 		if (str_eq(name, names_SBoxes[index])) arguments.sbox_index = index;
@@ -97,7 +104,7 @@ bool parseArgs(const char* name, const char* choice, const char* heuristic)
 		if (str_eq(heuristic, "real")) arguments.cplex_mode = 2;
 		if (str_eq(heuristic, "threshold")) arguments.heuristic_index = count_heuristics;
 		if (arguments.heuristic_index != -1) arguments.cplex_mode = 2;
-
+		
 		if (arguments.cplex_mode == -1) return false;
 	}
 
@@ -113,6 +120,9 @@ int main(int argc, const char* argv[])
 {
 	init_LUTs();
 	init_SBoxes();
+	////////////STATS/////////////
+	Stats::initChrono();
+	/////////////////////////////
 
 	const char * name_value;
 #ifdef CPLEX
@@ -185,6 +195,7 @@ int main(int argc, const char* argv[])
 
 		QuineMcCluskey<with16bits>(minterms, termsmap);
 		termsmap_extract_primeimplicants<with16bits>(termsmap, primeimplicants);
+		Stats::setInSize(primeimplicants.size());
 
 #ifdef PROGRESS
 		print_terms<with16bits>(fout_pi, primeimplicants);
@@ -204,20 +215,20 @@ int main(int argc, const char* argv[])
 
 #ifdef PROGRESS
 	{
-	std::ifstream fin_chart(prefix + "chart.txt");
-	if (fin_chart) {
-		unprint_chart<with16bits>(fin_chart, mintermschart);
-		unprint_chart<with16bits>(fin_chart, primeimplicantschart);
-	}
-	else {
-		std::ofstream fout_chart(prefix + "chart.txt");
-		if (!fout_chart) return 1;
+		std::ifstream fin_chart(prefix + "chart.txt");
+		if (fin_chart) {
+			unprint_chart<with16bits>(fin_chart, mintermschart);
+			unprint_chart<with16bits>(fin_chart, primeimplicantschart);
+		}
+		else {
+			std::ofstream fout_chart(prefix + "chart.txt");
+			if (!fout_chart) return 1;
 #endif
-		fill_chart<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart);
+			fill_chart<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart);
 #ifdef PROGRESS
-		print_chart<with16bits>(fout_chart, mintermschart);
-		print_chart<with16bits>(fout_chart, primeimplicantschart);
-	}
+			print_chart<with16bits>(fout_chart, mintermschart);
+			print_chart<with16bits>(fout_chart, primeimplicantschart);
+		}
 	}
 #endif
 
@@ -225,47 +236,47 @@ int main(int argc, const char* argv[])
 #ifdef CPLEX
 	if (arguments.cplex_mode >= 0)
 	{
-        const char* modes[3] = {"bin", "int", "real"};
+		const char* modes[3] = { "bin", "int", "real" };
 		int mode = arguments.cplex_mode;
-        //for (int mode = 0; mode < 3; mode++)
-        {
-        std::string name = prefix + "problem_" + modes[mode];
-		std::ofstream fout_LP(name + ".lp");
-		if (!fout_LP) return 1; // break;
-		export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode, true);
-        }
+		//for (int mode = 0; mode < 3; mode++)
+		//{
+			std::string name = prefix + "problem_" + modes[mode];
+			std::ofstream fout_LP(name + ".lp");
+			if (!fout_LP) return 1; // break;
+			export_LP<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart, fout_LP, name.c_str(), mode, true);
+		//}
 
-		// TODO:
 		// CPLEX.import_LP_file(name + ".lp");
+		run_Cplex(name + ".lp");
 		// CPLEX.export_solution(prefix + "CPLEX.txt");
+		writePrimeImplicantsFromCplex("cplexSolution" + name + ".txt", prefix + "CPLEX.txt");
 	}
 #endif
-
 
 #ifdef CPLEX
 	termsprobs_t<with16bits> termsprobs;
 
 	if (arguments.cplex_mode >= 0)
 	{
-	std::ifstream fin_cplex(prefix + "CPLEX.txt");
-	if (fin_cplex) {
-		std::cout << "Loading CPLEX file..." << std::endl;
-		import_CPLEX<with16bits>(fin_cplex, termsprobs);
+		std::ifstream fin_cplex(prefix + "CPLEX.txt");
+		if (fin_cplex) {
+			std::cout << "Loading CPLEX file..." << std::endl;
+			import_CPLEX<with16bits>(fin_cplex, termsprobs);
 
-		primeimplicants.clear();
-		for (auto& item : termsprobs) primeimplicants.push_back(item.first);
+			primeimplicants.clear();
+			for (auto& item : termsprobs) primeimplicants.push_back(item.first);
 
-	std::cout << "Computing CPLEX prime implicants chart..." << std::endl;
+			std::cout << "Computing CPLEX prime implicants chart..." << std::endl;
 
-	mintermschart.clear();
-	primeimplicantschart.clear();
-	fill_chart<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart);
+			mintermschart.clear();
+			primeimplicantschart.clear();
+			fill_chart<with16bits>(minterms, primeimplicants, mintermschart, primeimplicantschart);
 
-	}
+		}
 	}
 #endif
 
-	
+
 	terms_t<with16bits> primeimplicants_reduced;
 
 #ifdef CPLEX
@@ -296,15 +307,15 @@ if (arguments.heuristic_index >= 0)
 			primeimplicants_reduced = primeimplicants;
 			primeimplicants_reduce_fast<with16bits>(minterms_copy, primeimplicants_reduced);
 		}
-		else
+		else if(arguments.heuristic_index != -1)
 		{
 			(*array_heuristics[arguments.heuristic_index])(minterms, primeimplicants, mintermschart, primeimplicantschart, primeimplicants_reduced);
 		}
 #ifdef PROGRESS
 		print_terms<with16bits>(fout_pireduced, primeimplicants_reduced);
 
-//		std::cout << "Result:" << std::endl;
-//		print_terms(std::cout, primeimplicants_reduced);
+// 		std::cout << "Result:" << std::endl;
+// 		print_terms(std::cout, primeimplicants_reduced);
 //		std::cout << std::endl << std::endl;
 	}
 #endif
@@ -312,42 +323,49 @@ if (arguments.heuristic_index >= 0)
 
 
 	{
-	std::cout << "Checking reduction..." << std::endl;
+		std::cout << "Checking reduction..." << std::endl;
 
-	terms_t<with16bits> primeimplicants_reduced;
+		terms_t<with16bits> primeimplicants_reduced;
 
-	{
+		{
 #ifdef PROGRESS
-		std::ifstream fin_pireduced(prefix + "primeimplicants_reduced_" + names_heuristics[arguments.heuristic_index] + ".txt");
-		if (!fin_pireduced) return 1;
-		unprint_terms<with16bits>(fin_pireduced, primeimplicants_reduced);
+			std::ifstream fin_pireduced(prefix + "primeimplicants_reduced_" + names_heuristics[arguments.heuristic_index] + ".txt");
+			if (!fin_pireduced) return 1;
+			unprint_terms<with16bits>(fin_pireduced, primeimplicants_reduced);
 #else
-		primeimplicants_reduced = std::move(primeimplicants);
+			primeimplicants_reduced = std::move(primeimplicants);
 #endif
 
-		bool correct = check<with16bits>(minterms, primeimplicants_reduced);
-		if (correct)
-		{
-			std::cout << "Correct." << std::endl;
+			bool correct = check<with16bits>(minterms, primeimplicants_reduced);
+			if (correct)
+			{
+				std::cout << "Correct." << std::endl;
+			}
+			else
+			{
+				std::cerr << "Mistake!" << std::endl;
+			}
 		}
-		else
-		{
-			std::cerr << "Mistake!" << std::endl;
-		}
-	}
 	}
 
 
+	if(arguments.heuristic_index != -1)
 	{
 		std::ofstream fout_result(prefix + "primeimplicants_reduced_" + names_heuristics[arguments.heuristic_index] + ".txt");
 		if (!fout_result) return 1;
-		std::vector<std::pair<typename with8bits::pair,typename with8bits::pair>> result;
-		terms_split<with16bits,with8bits>(primeimplicants_reduced, result);
+		std::vector<std::pair<typename with8bits::pair, typename with8bits::pair>> result;
+		terms_split<with16bits, with8bits>(primeimplicants_reduced, result);
+		////////////STATS/////////////
+		Stats::setOutSize(result.size());
+		/////////////////////////////
 		print_termshalf<with8bits>(fout_result, result);
 	}
 
 
 	std::cout << "Done." << std::endl;
-
+	////////////STATS/////////////
+	Stats::closeChrono();
+	Stats::writeStats();
+	/////////////////////////////
 	return 0;
 }
