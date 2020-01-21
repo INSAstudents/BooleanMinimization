@@ -33,7 +33,7 @@ static const char * const names_SBoxes[count_SBoxes] = { "AES", "M0", "M1", "M2"
 typedef const uint8_t(*sbox_ptr)[256];
 static const sbox_ptr array_SBoxes[count_SBoxes] = { &SBox_AES, &SBox_Midori128_S0, &SBox_Midori128_S1, &SBox_Midori128_S2, &SBox_Midori128_S3 };
 static const int count_heuristics = 5;
-static const char * const names_heuristics[count_heuristics] = { "fastest", "maxmt", "maxmtminpi", "mostlikely", "petrick" };
+static const char * const names_heuristics[count_heuristics] = { "none", "naive", "naiveimproved", "advanced", "petrick" };
 typedef void(*heuristic_ptr) (const minterms_t<with16bits>&, const terms_t<with16bits>&, chart_t<with16bits>&, chart_t<with16bits>&, terms_t<with16bits>&);
 static const heuristic_ptr array_heuristics[count_heuristics] = { &primeimplicants_reduce_good<with16bits>, &primeimplicants_reduce_good<with16bits>, &primeimplicants_reduce_well<with16bits>, &primeimplicants_reduce_hope<with16bits>, &PetricksMethod<with16bits> };
 #ifdef CPLEX
